@@ -47,6 +47,16 @@ jobs:
           Invoke-WebRequest -Uri "https://github.com/microsoft/onnxruntime/releases/download/v1.22.0/onnxruntime-win-x64-1.22.0.zip" -OutFile onnxruntime.zip
           7z x onnxruntime.zip -o"${{ github.workspace }}/crates/screenpipe-engine/" -y
 
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+
+      - name: Setup OpenBLAS for qwen3-asr
+        shell: pwsh
+        run: |
+          cd apps/screenpipe-app-tauri
+          bun scripts/setup_openblas.js
+          "OPENBLAS_PATH=${{ github.workspace }}/apps/screenpipe-app-tauri/src-tauri/openblas" | Out-File -FilePath $env:GITHUB_ENV -Append
+
       - name: Shorten target dir (MAX_PATH workaround)
         shell: powershell
         run: |
@@ -86,6 +96,12 @@ jobs:
           $pkgDir = "screenpipe-$ver-windows"
           New-Item -Path "$pkgDir/bin" -ItemType Directory -Force
           Copy-Item "target/release/screenpipe.exe" "$pkgDir/bin/"
+          # Bundle ONNX Runtime DLL
+          $ortDll = "${{ github.workspace }}/crates/screenpipe-engine/onnxruntime-win-x64-1.22.0/lib/onnxruntime.dll"
+          if (Test-Path $ortDll) { Copy-Item $ortDll "$pkgDir/bin/" -Force }
+          # Bundle OpenBLAS DLL(s) for qwen3-asr
+          $openblasBin = "${{ github.workspace }}/apps/screenpipe-app-tauri/src-tauri/openblas/bin"
+          if (Test-Path $openblasBin) { Copy-Item "$openblasBin/*.dll" "$pkgDir/bin/" -Force }
           # Bundle VC++ runtime DLLs
           $vcDlls = @('vcruntime140.dll', 'vcruntime140_1.dll', 'msvcp140.dll')
           foreach ($dll in $vcDlls) {
