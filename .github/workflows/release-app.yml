@@ -42,7 +42,7 @@ jobs:
       macos_arm_runner: ${{ steps.check-runner.outputs.macos_arm_runner }}
       windows_runner: ${{ steps.check-runner.outputs.windows_runner }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           fetch-depth: 2
       - id: check
@@ -139,7 +139,7 @@ jobs:
     if: github.event_name == 'workflow_dispatch' || needs.check_commit.outputs.should_release == 'true'
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           ref: ${{ github.event.inputs.commit_hash || github.ref }}
 
@@ -233,7 +233,7 @@ jobs:
             throw "Failed to enable git long paths"
           }
 
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           ref: ${{ github.event.inputs.commit_hash || github.ref }}
 
@@ -337,7 +337,7 @@ jobs:
           save-if: true
 
       - name: Cache Build Artifacts
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: |
             target/${{ matrix.target }}/release
@@ -354,7 +354,7 @@ jobs:
 
       - name: Cache Homebrew packages
         if: matrix.platform == 'macos-latest'
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: |
             ~/Library/Caches/Homebrew
@@ -367,7 +367,7 @@ jobs:
       # Cache binary dependencies (ffmpeg, tesseract, ollama, vcredist, WixTools)
       # These rarely change - keyed on workflow file hash, not lockfiles
       - name: Cache Binary Dependencies
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: |
             apps/screenpipe-app-tauri/src-tauri/ffmpeg
@@ -385,7 +385,7 @@ jobs:
       # Cache node_modules and tauri CLI - changes with bun.lockb
       - name: Cache Node Modules
         id: cache-pre-build
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: |
             apps/screenpipe-app-tauri/node_modules
@@ -1539,7 +1539,7 @@ jobs:
     if: github.event_name == 'workflow_dispatch' || needs.check_commit.outputs.should_release == 'true'
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           fetch-depth: 100
 

@@ -21,7 +21,7 @@ jobs:
     runs-on: windows-2022
     timeout-minutes: 120
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - name: Enable Git long paths on Windows
         shell: powershell
@@ -87,7 +87,7 @@ jobs:
           save-if: true
 
       - name: Cache Pre Build
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: |
             apps/screenpipe-app-tauri/src-tauri/ffmpeg
@@ -294,7 +294,7 @@ jobs:
           Write-Host "R2 enterprise upload complete for Windows"
 
       - name: Upload enterprise NSIS installer (artifact)
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: enterprise-windows-x64
           path: |
@@ -305,7 +305,7 @@ jobs:
     runs-on: macos-latest
     timeout-minutes: 120
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - name: Setup Bun
         uses: oven-sh/setup-bun@v2
@@ -330,7 +330,7 @@ jobs:
           save-if: true
 
       - name: Cache Pre Build
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: |
             apps/screenpipe-app-tauri/node_modules
@@ -649,7 +649,7 @@ jobs:
           echo "R2 enterprise upload complete for macOS"
 
       - name: Upload enterprise macOS artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: enterprise-macos-arm64
           path: |
@@ -670,7 +670,7 @@ jobs:
     runs-on: ubuntu-latest
     if: always() && (needs.release-enterprise-windows.result == 'success' || needs.release-enterprise-macos.result == 'success')
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - name: Notify enterprise build subscribers
         shell: bash

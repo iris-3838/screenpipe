@@ -19,7 +19,7 @@ jobs:
     runs-on: [self-hosted, macos-test]
     if: github.ref == 'refs/heads/main'
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - uses: dtolnay/rust-toolchain@stable
 
       - name: Install dependencies
@@ -33,7 +33,7 @@ jobs:
           cargo bench --bench ocr_benchmark -- --output-format bencher | tee -a ocr_output.txt
 
       - name: Upload OCR benchmark artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: apple-ocr-benchmark-data
           path: ocr_output.txt
@@ -42,7 +42,7 @@ jobs:
     name: Run Tesseract OCR benchmark
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - uses: dtolnay/rust-toolchain@stable
 
       - name: Install dependencies
@@ -55,7 +55,7 @@ jobs:
           cargo bench --bench ocr_benchmark -- --output-format bencher | tee -a ocr_output.txt
 
       - name: Upload OCR benchmark artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: tesseract-ocr-benchmark-data
           path: ocr_output.txt
@@ -65,7 +65,7 @@ jobs:
     runs-on: [self-hosted, windows-desktop-test]
     if: github.ref == 'refs/heads/main'
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - uses: dtolnay/rust-toolchain@stable
 
       - name: Run Windows OCR benchmarks
@@ -75,7 +75,7 @@ jobs:
           # | Tee-Object -Append -FilePath ocr_output.txt
 
       - name: Upload OCR benchmark artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: windows-ocr-benchmark-data
           path: ocr_output.txt
@@ -84,7 +84,7 @@ jobs:
     name: Run STT benchmark
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - uses: dtolnay/rust-toolchain@stable
 
       - name: Install dependencies
@@ -97,7 +97,7 @@ jobs:
           cargo bench --bench stt_benchmark -- --output-format bencher | tee -a stt_output.txt
 
       - name: Upload STT benchmark artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: stt-benchmark-data
           path: stt_output.txt
@@ -112,7 +112,7 @@ jobs:
       ]
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - name: Download Apple OCR benchmark data
         uses: actions/download-artifact@v4

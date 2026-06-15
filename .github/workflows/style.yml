@@ -15,7 +15,7 @@ jobs:
     name: Clippy & Format
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - name: Install dependencies
         run: .github/scripts/install_dependencies.sh
@@ -44,7 +44,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - name: Check for unused dependencies
         uses: bnjbvr/cargo-machete@main
@@ -73,7 +73,7 @@ jobs:
       run:
         working-directory: apps/screenpipe-app-tauri
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - uses: oven-sh/setup-bun@v2
       - name: Install dependencies
         run: bun install --frozen-lockfile
