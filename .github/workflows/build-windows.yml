@@ -1,0 +1,103 @@
+name: Build Windows CLI (MIT)
+
+on:
+  workflow_dispatch:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+jobs:
+  build-windows:
+    runs-on: windows-2022
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Rust
+        run: |
+          Invoke-WebRequest https://static.rust-lang.org/rustup/dist/x86_64-pc-windows-gnu/rustup-init.exe -OutFile rustup-init.exe
+          .\rustup-init.exe -y
+
+      - name: Install 7zip
+        shell: powershell
+        run: |
+          $7zipUrl = "https://7-zip.org/a/7z2405-x64.exe"
+          $7zipInstaller = "7z-installer.exe"
+          Invoke-WebRequest -Uri $7zipUrl -OutFile $7zipInstaller
+          Start-Process -FilePath .\$7zipInstaller -Args "/S" -Wait
+          Remove-Item $7zipInstaller
+          echo "C:\Program Files\7-Zip" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+
+      - name: Set up MSVC
+        uses: ilammy/msvc-dev-cmd@v1
+
+      - uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+          key: windows-cargo-${{ hashFiles('**/Cargo.lock') }}
+
+      - name: Download ONNX Runtime (CPU)
+        shell: pwsh
+        run: |
+          Invoke-WebRequest -Uri "https://github.com/microsoft/onnxruntime/releases/download/v1.22.0/onnxruntime-win-x64-1.22.0.zip" -OutFile onnxruntime.zip
+          7z x onnxruntime.zip -o"${{ github.workspace }}/crates/screenpipe-engine/" -y
+
+      - name: Shorten target dir (MAX_PATH workaround)
+        shell: powershell
+        run: |
+          $shortDir = "C:\t"
+          if (Test-Path $shortDir) { Remove-Item -Recurse -Force $shortDir }
+          New-Item -ItemType Directory -Force -Path $shortDir | Out-Null
+          if (Test-Path "target") { Remove-Item -Recurse -Force "target" }
+          cmd /c mklink /J target $shortDir
+
+      - name: Build CLI (Windows MSVC, default features)
+        shell: pwsh
+        env:
+          CARGO_PROFILE_RELEASE_STRIP: "none"
+          CARGO_PROFILE_RELEASE_PANIC: "abort"
+          CARGO_PROFILE_RELEASE_INCREMENTAL: "false"
+          # Disable AVX512 to avoid crashes on consumer CPUs
+          GGML_NATIVE: "OFF"
+          GGML_AVX512: "OFF"
+          GGML_AVX512_VBMI: "OFF"
+          GGML_AVX512_VNNI: "OFF"
+          GGML_AVX512_BF16: "OFF"
+          CFLAGS: "/arch:AVX2"
+          CXXFLAGS: "/arch:AVX2"
+          CMAKE_ARGS: "-DGGML_NATIVE=OFF -DGGML_AVX512=OFF -DGGML_AVX512_VBMI=OFF -DGGML_AVX512_VNNI=OFF -DGGML_AVX512_BF16=OFF -DCMAKE_C_FLAGS=/arch:AVX2 -DCMAKE_CXX_FLAGS=/arch:AVX2"
+          AWS_LC_SYS_PREBUILT_NASM: "1"
+        run: |
+          # Set ORT lib location for ort crate
+          $ortDir = "${{ github.workspace }}/crates/screenpipe-engine/onnxruntime-win-x64-1.22.0"
+          $env:ORT_STRATEGY = "system"
+          $env:ORT_LIB_LOCATION = "$ortDir/lib"
+          cargo build --release -p screenpipe-engine --bin screenpipe
+
+      - name: Package binary
+        shell: pwsh
+        run: |
+          $ver = if ($env:GITHUB_REF -match "refs/tags/v(.+)") { $matches[1] } else { "0.4.15-mit" }
+          $pkgDir = "screenpipe-$ver-windows"
+          New-Item -Path "$pkgDir/bin" -ItemType Directory -Force
+          Copy-Item "target/release/screenpipe.exe" "$pkgDir/bin/"
+          # Bundle VC++ runtime DLLs
+          $vcDlls = @('vcruntime140.dll', 'vcruntime140_1.dll', 'msvcp140.dll')
+          foreach ($dll in $vcDlls) {
+            Copy-Item "C:\Windows\System32\$dll" "$pkgDir/bin/" -ErrorAction Stop
+          }
+          7z a "$pkgDir.zip" "./$pkgDir/*"
+          $hash = Get-FileHash "$pkgDir.zip" -Algorithm SHA256
+          "SHA256: $($hash.Hash)" | Out-Host
+          Write-Host "## Package: $pkgDir.zip"
+
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: screenpipe-windows-cli-mit
+          path: screenpipe-*.zip
